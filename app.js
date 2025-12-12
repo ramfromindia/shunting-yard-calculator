@@ -1,3 +1,36 @@
+/*
+ * Shunting Yard Calculator - app.js
+ *
+ * Purpose
+ *  - Implements a small in-browser calculator using Dijkstra's Shunting Yard
+ *    algorithm to convert infix expressions to RPN (Reverse Polish Notation)
+ *    and then evaluates the RPN to get a numeric result.
+ *
+ * Structure
+ *  - `Stack` and `Queue` lightweight containers used by the algorithm.
+ *  - `ShuntingYard` orchestrates tokenization, infix->RPN conversion, and
+ *    evaluation of the resulting RPN expression.
+ *  - DOM bindings at the bottom wire HTML buttons/keys to the calculator.
+ *
+ * Expected HTML
+ *  - Buttons/elements with IDs: one, two, three, four, five, six, seven,
+ *    eight, nine, zero, plus, subtract, divide, multiply, equals, clear
+ *  - A display element with ID: screen
+ *
+ * Usage
+ *  - Type or click digits/operators to build an expression, press Enter or
+ *    click `=` to evaluate. The calculator supports +, -, *, / and parentheses.
+ *
+ * Notes & Limitations
+ *  - The tokenizer expects single-character operators and numeric characters
+ *    (multi-digit numbers are supported because characters are concatenated).
+ *  - No unary operator handling (e.g., leading `-` as negation) is implemented.
+ *  - Division by zero will return `Infinity` (native JS behaviour).
+ *
+ * Example
+ *  - Input: "12+3*(4-1)" → RPN: "12 3 4 1 - * +" → Result: 21
+ */
+
 // Classes
 class Stack {
     constructor() {
@@ -55,6 +88,15 @@ class ShuntingYard {
         this.s = new Stack();
     }
 
+    /**
+     * Tokenize a raw input string into numeric and operator tokens and enqueue
+     * them into `this.stream` for processing.
+     *
+     * This method concatenates adjacent numeric characters so multi-digit
+     * numbers (and decimals if provided as characters) remain single tokens.
+     *
+     * @param {string} input - Raw input sequence (example: "12+3*(4-1)")
+     */
     makeString(input) {
         let temp = [];
         let tempIndex = 0;
@@ -85,12 +127,14 @@ class ShuntingYard {
     }
 
     compute_infix() {
+        // Convert infix tokens (from this.stream) to postfix (RPN) into this.q
         while (!this.stream.isEmpty()) {
             let t = this.stream.dequeue();
             if (!isNaN(t)) this.q.enqueue(t);
             else if (t === "(") this.s.push(t);
             else if (t === ")") {
-                while (!this.s.peek() === "(") this.q.enqueue(s.pop());
+                // pop operators into output until a left-paren is found
+                while (this.s.peek() !== "(") this.q.enqueue(this.s.pop());
                 this.s.pop();
             }
             else {
